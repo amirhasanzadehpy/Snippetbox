@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"text/template"
 
 	"amirhasanzadehpy/Snippetbox.git/pkg/models/mysql"
 
@@ -13,9 +14,10 @@ import (
 )
 
 type application struct {
-	infoLog  *log.Logger
-	errorLog *log.Logger
-	snippets *mysql.SnippetModel
+	infoLog       *log.Logger
+	errorLog      *log.Logger
+	snippets      *mysql.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -34,10 +36,16 @@ func main() {
 
 	defer db.Close()
 
+	templateCache, err := newTemplateCache("./ui/html/")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &mysql.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &mysql.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
